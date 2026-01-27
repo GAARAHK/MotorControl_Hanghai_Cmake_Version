@@ -39,6 +39,8 @@
 | **ADC 位置** | ADC1_IN7 | PA7 | 角度传感器/电位器 |
 | **LED 指示** | GPIO | PB12 | 1Hz 心跳闪烁 |
 | **调试串口** | USART1 | PA9/10 | Log 输出 / AT 指令 |
+| **LIN 通信** | USART3 | PB10/11 | TX/RX (波特率 19200) |
+| **LIN 休眠** | GPIO | PA4 | TJA1021 SLP_N 控制 |
 
 ## 4. 快速使用指南
 
@@ -52,6 +54,9 @@ HAL_TIM_Base_Start_IT(&htim3);
 
 // 2. 调用应用层总入口 (包含电机、ADC、串口、Log的初始化)
 App_Init(); 
+
+// 3. 初始化 LIN 总线 (配置收发器与中断)
+App_LIN_Init();
 ```
 
 #### 第二步：运行参数配置
@@ -121,9 +126,43 @@ App_Motor_MovePosWithLimit(0, MOTOR_DIR_CW, 1000, 5000);
 *   **Spd**: 0~1000 (PWM占空比)
 *   **Ms**: 运行毫秒数
 
-## 5. 项目扩展指南
+## 5. LIN 通信协议
 
-### 5.1 增加第2个电机
+本项目通过 USART3 (PB10/PB11) + TJA1021 收发器实现 LIN Slave 功能。
+*   **波特率**: 19200 bps
+*   **协议版本**: LIN 2.x (Enhanced Checksum) / LIN 1.x (Classic Checksum) 兼容
+
+### 5.1 帧结构
+标准 LIN 帧包括：**Break** (显性>=13bit) + **Sync** (0x55) + **PID** (ID+Parity) + **Data** (8 Bytes) + **Checksum**。
+
+**PID 计算**: 
+*   `P0 = ID0 ^ ID1 ^ ID2 ^ ID4`
+*   `P1 = ~(ID1 ^ ID3 ^ ID4 ^ ID5)`
+*   `PID = (P1 << 7) | (P0 << 6) | ID`
+
+### 5.2 支持指令表
+
+假设目标电机 ID=1。
+
+| 功能 | ID (Hex) | PID (Hex) | Data 0 | Data 1 | Data 2 | Data 3 | Data 4 | Data 5 | Data 6 | Data 7 |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **运行/停止** | **0x30** | **0xF0** | Cmd* | MotorID | Dir | SpdH | SpdL | TimeH | TimeL | Res |
+| **位置控制** | **0x31** | **0xB1** | MotorID | Dir | SpdH | SpdL | Pos3 | Pos2 | Pos1 | Pos0 |
+| **ADC控制** | **0x32** | **0x32** | MotorID | SpdH | SpdL | AdcH | AdcL | Tol | RngH | RngL |
+
+*   **Cmd**: 1=Run, 2=Stop, 3=Time
+*   **Dir**: 0=CCW, 1=CW
+*   **Pos**: 4字节脉冲数 (Big Endian)
+
+### 5.3 发送示例 (Hex)
+*   **电机1 以1000速度正转**: `55 F0 01 01 01 03 E8 00 00 00 20`
+*   **电机1 停止**: `55 F0 02 01 00 00 00 00 00 00 0C`
+*   **电机1 走10000脉冲**: `55 B1 01 00 07 D0 00 00 27 10 3E`
+*(注: 实际发送前需先发送 Break 信号)*
+
+## 6. 项目扩展指南
+
+### 6.1 增加第2个电机
 1.  **CubeMX配置**:
     *   新增PWM通道、DIR/BRK/FG 引脚。
     *   新增ADC通道用于电流和位置采样 (如有)。
@@ -134,7 +173,7 @@ App_Motor_MovePosWithLimit(0, MOTOR_DIR_CW, 1000, 5000);
 4.  **ADC配置 (App/Src/app_adc.c)**:
     *   在 `App_Adc_Process` 中添加新通道的数据读取映射。
 
-### 5.2 链接脚本 (Linker Script) 注意
+### 6.2 链接脚本 (Linker Script) 注意
 本项目使用了修复版的链接脚本 `STM32F103C8Tx_FLASH_fixed.ld` 以解决 CubeMX 生成的 GCC 脚本 Bug。
 *   **不要删除** 该文件。
 *   如果修改了芯片型号或堆栈大小，请手动同步修改该文件。

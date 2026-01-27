@@ -170,7 +170,7 @@ void AT_SendResponse(const char *format, ...) {
     int len = vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
     
-    if (len > 0 && len < sizeof(buffer)) {
+    if (len > 0 && len < (int)sizeof(buffer)) {
         // 添加结束符 \r\n
         buffer[len++] = '\r';
         buffer[len++] = '\n';

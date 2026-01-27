@@ -67,6 +67,10 @@ void Error_Handler(void);
 #define BAT_V_GPIO_Port GPIOA
 #define Location_ADC_Pin GPIO_PIN_7
 #define Location_ADC_GPIO_Port GPIOA
+#define LIN_TX_Pin GPIO_PIN_10
+#define LIN_TX_GPIO_Port GPIOB
+#define LIN_RX_Pin GPIO_PIN_11
+#define LIN_RX_GPIO_Port GPIOB
 #define LED_01_Pin GPIO_PIN_12
 #define LED_01_GPIO_Port GPIOB
 #define MOTOR1_PWM_Pin GPIO_PIN_6

@@ -28,11 +28,12 @@
 /* USER CODE BEGIN Includes */
 #include "at_command.h"
 #include "log.h"
+#include "app_lin.h"
 #include "app_main.h"
-#include "bsp_bldc.h"  // for interrupt
 #include "app_motor.h"
-#include "app_linkage.h"
 #include "app_adc.h"
+#include "bsp_bldc.h"  // for interrupt
+#include "app_linkage.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -109,13 +110,14 @@ int main(void)
  
   // 2. 初始化应用层 (电机/ADC/串口)
   App_Init();
+  App_LIN_Init();
   
   // 3. 配置电机参数
   // 电机0: 最后2500脉冲开始减速, 最低速度PWM=100
   App_Motor_ConfigDecel(0, 2500, 100);
   
   // 电机0: 配置硬件限位开关 (PA0=CW限位, PA1=CCW限位, 低电平触发)
-  App_Motor_ConfigLimit(0, GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
+  //App_Motor_ConfigLimit(0, GPIOA, GPIO_PIN_0, GPIOA, GPIO_PIN_1, GPIO_PIN_RESET);
 
   // 4. 配置ADC安全保护阈值
   // 全局: 欠压9V, 过压28V, 过温85度
