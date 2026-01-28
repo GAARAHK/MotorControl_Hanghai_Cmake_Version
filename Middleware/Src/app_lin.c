@@ -1,13 +1,13 @@
 #include "app_lin.h"
-#include "usart.h"
 #include "app_motor.h"
 #include "app_linkage.h"
 #include "bsp_bldc.h"
 #include "app_adc.h"
 #include "log.h"
 #include <string.h>
+#include "bsp_conf.h" // 引入配置
 
-extern UART_HandleTypeDef huart3;
+// extern UART_HandleTypeDef huart3; // 移除
 
 // LIN 状态机变量
 static volatile LinState_t lin_state = LIN_STATE_IDLE;
@@ -110,8 +110,8 @@ void App_LIN_Init(void) {
     
     // 2. 开启断帧检测中断 (LBDIE) 和 接收非空中断 (RXNEIE)
     // 注意: HAL_LIN_Init 默认只配置了基本参数
-    __HAL_UART_ENABLE_IT(&huart3, UART_IT_LBD);
-    __HAL_UART_ENABLE_IT(&huart3, UART_IT_RXNE);
+    __HAL_UART_ENABLE_IT(&LIN_UART_HANDLE, UART_IT_LBD);
+    __HAL_UART_ENABLE_IT(&LIN_UART_HANDLE, UART_IT_RXNE);
     
     // LOG("LIN Init OK\r\n");
 }
@@ -122,20 +122,20 @@ void App_LIN_Process(void) {
 
 // 放入 stm32f1xx_it.c 的 USART3_IRQHandler 中
 void App_LIN_IRQHandler(void) {
-    uint32_t isrflags = READ_REG(huart3.Instance->SR);
-    uint32_t cr1its   = READ_REG(huart3.Instance->CR1);
-    uint32_t cr2its   = READ_REG(huart3.Instance->CR2);
+    uint32_t isrflags = READ_REG(LIN_UART_HANDLE.Instance->SR);
+    uint32_t cr1its   = READ_REG(LIN_UART_HANDLE.Instance->CR1);
+    uint32_t cr2its   = READ_REG(LIN_UART_HANDLE.Instance->CR2);
     
     // 1. 检测到 Break (LBD)
     if ((isrflags & USART_SR_LBD) && (cr2its & USART_CR2_LBDIE)) {
-        __HAL_UART_CLEAR_FLAG(&huart3, UART_FLAG_LBD);
+        __HAL_UART_CLEAR_FLAG(&LIN_UART_HANDLE, UART_FLAG_LBD);
         lin_state = LIN_STATE_BREAK;
         // 等待 Sync Field (0x55)
     }
     
     // 2. 接收数据 (RXNE)
     if ((isrflags & USART_SR_RXNE) && (cr1its & USART_CR1_RXNEIE)) {
-        uint8_t data = (uint8_t)(huart3.Instance->DR & 0xFF);
+        uint8_t data = (uint8_t)(LIN_UART_HANDLE.Instance->DR & 0xFF);
         
         switch (lin_state) {
             case LIN_STATE_BREAK:

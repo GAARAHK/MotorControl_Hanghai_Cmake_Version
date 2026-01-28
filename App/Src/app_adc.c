@@ -1,11 +1,11 @@
 #include "bsp_bldc.h" // 获取 MAX_MOTORS
 #include "app_adc.h"
-#include "adc.h"
+#include "bsp_conf.h" // 引用配置宏
 #include "app_motor.h"
 #include "log.h"
 #include <math.h>
 
-extern ADC_HandleTypeDef hadc1;
+// extern ADC_HandleTypeDef hadc1; // 移除直接 extern，使用 ADC_HANDLE
 
 AppAdcData_t g_adc_data;
 static AdcProtectionConfig_t prot_conf = {

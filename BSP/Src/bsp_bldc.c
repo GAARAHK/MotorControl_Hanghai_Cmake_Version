@@ -1,11 +1,11 @@
 #include "bsp_bldc.h"
-#include "tim.h" // CubeMX生成的 timer 配置
+#include "bsp_conf.h" // 引用统一配置
 
 BLDC_Handle_t motors[MAX_MOTORS];
 
 void BSP_BLDC_Init(void) {
     // --- 电机 1 配置 (对应图片引脚) ---
-    motors[0].config.htim_pwm = &htim4;        // PB6 对应 TIM4_CH1
+    motors[0].config.htim_pwm = &MOTOR_TIM_HANDLE;        // 使用宏替代
     motors[0].config.pwm_channel = TIM_CHANNEL_1;
     motors[0].config.dir_port = MOTOR1_DIR_GPIO_Port;
     motors[0].config.dir_pin = MOTOR1_DIR_Pin;

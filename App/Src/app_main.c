@@ -8,16 +8,17 @@
 
 #include "at_command.h"
 #include "log.h"
+#include "bsp_conf.h"
 
-extern UART_HandleTypeDef huart1; // 引用 CubeMX 生成的句柄
+// extern UART_HandleTypeDef huart1; // 移除
 
 void App_Init(void) {
     App_Storage_Init(); // 优先初始化存储，获取ID等配置
     BSP_BLDC_Init();
     App_Motor_Init();
     App_Adc_Init(); // 启动ADC采样
-    AT_Init(&huart1);
-	Log_Init(&huart1);
+    AT_Init(&LOG_UART_HANDLE); // 使用宏
+	Log_Init(&LOG_UART_HANDLE); // 使用宏
 }
 
 void App_Loop(void) {
