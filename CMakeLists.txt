@@ -49,6 +49,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     App/Src/app_main.c
     App/Src/app_motor.c
     BSP/Src/bsp_bldc.c
+    App/Src/app_storage.c
     Middleware/Src/at_command.c
     Middleware/Src/log.c
     Middleware/Src/app_lin.c

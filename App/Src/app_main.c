@@ -4,6 +4,7 @@
 #include "app_motor.h"
 #include "app_linkage.h"
 #include "app_adc.h"
+#include "app_storage.h"
 
 #include "at_command.h"
 #include "log.h"
@@ -11,6 +12,7 @@
 extern UART_HandleTypeDef huart1; // 引用 CubeMX 生成的句柄
 
 void App_Init(void) {
+    App_Storage_Init(); // 优先初始化存储，获取ID等配置
     BSP_BLDC_Init();
     App_Motor_Init();
     App_Adc_Init(); // 启动ADC采样

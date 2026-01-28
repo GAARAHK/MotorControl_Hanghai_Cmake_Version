@@ -52,7 +52,7 @@
 // 1. 开启关键中断 (TIM3用于系统Tick和采样)
 HAL_TIM_Base_Start_IT(&htim3);
 
-// 2. 调用应用层总入口 (包含电机、ADC、串口、Log的初始化)
+// 2. 调用应用层总入口 (包含电机、ADC、串口、Log、Storage的初始化)
 App_Init(); 
 
 // 3. 初始化 LIN 总线 (配置收发器与中断)
@@ -120,6 +120,8 @@ App_Motor_MovePosWithLimit(0, MOTOR_DIR_CW, 1000, 5000);
 | **查询传感器**| `AT+GETADC=<ID>` | `AT+GETADC=0` | ID=0返回电压/温度/异常，ID=n返回电流/位置 |
 | **查询状态** | `AT+QUERY=<ID>` | `AT+QUERY=1` | 获取运行状态与脉冲计数 |
 | **联动控制** | `AT+LINK=<Mode>,[Loop]` | `AT+LINK=4,1` | 启动联动模式 (Mode=4, Loop=1次) |
+| **设置ID**   | `AT+SETID=<ID>`        | `AT+SETID=2`    | 设置设备通信ID (Flash保存) |
+| **查询信息** | `AT+INFO`              | `AT+INFO`       | 返回SW版本与设备ID |
 
 *   **ID**: 1~N (电机编号)
 *   **Dir**: 0=CCW, 1=CW
@@ -172,6 +174,8 @@ App_Motor_MovePosWithLimit(0, MOTOR_DIR_CW, 1000, 5000);
     *   在 `BSP_BLDC_Init` 中添加 `motors[1]` 的引脚配置。
 4.  **ADC配置 (App/Src/app_adc.c)**:
     *   在 `App_Adc_Process` 中添加新通道的数据读取映射。
+5.  **FLASH存储 **:
+    *  可以直接使用 AT+SETID=5 这样的指令修改 ID，即使断电重启，设备 ID 也会保持为 5。未来如果需要保存更多参数（如 PID 参数、限位阈值等），只需在 app_storage.h 的 AppConfig_t 结构体中添加字段，并在    SetDefaultConfig 中给予默认值即可，底层读写逻辑无需修改
 
 ### 6.2 链接脚本 (Linker Script) 注意
 本项目使用了修复版的链接脚本 `STM32F103C8Tx_FLASH_fixed.ld` 以解决 CubeMX 生成的 GCC 脚本 Bug。

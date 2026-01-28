@@ -12,6 +12,9 @@
 #include "app_adc.h"      // 引用ADC数据接口
 #include "bsp_bldc.h"     // 引用底层获取状态
 
+#include "app_main.h"     // 引用主应用配置(DeviceID/Ver)
+#include "app_storage.h"
+
 // 接收缓冲区
 static uint8_t at_rx_buffer[AT_RX_BUFFER_SIZE];
 static char at_cmd_buffer[AT_CMD_MAX_LEN];
@@ -35,7 +38,8 @@ static AtCmdStatus_t Process_AdcMove(char *params);
 static AtCmdStatus_t Process_AdcMoveLim(char *params);
 static AtCmdStatus_t Process_CfgDecel(char *params);
 static AtCmdStatus_t Process_GetAdc(char *params);
-
+static AtCmdStatus_t Process_SetID(char *params);
+static AtCmdStatus_t Process_Info(void);
 
 // 初始化 AT 命令处理器
 void AT_Init(UART_HandleTypeDef *huart) {
@@ -218,6 +222,7 @@ AtCmdStatus_t AT_ProcessCommand(char *cmd) {
     if (strcmp(cmd_name, "ADCMOVELIM") == 0) return Process_AdcMoveLim(param_start);
     if (strcmp(cmd_name, "CFGDECEL") == 0)   return Process_CfgDecel(param_start);
     if (strcmp(cmd_name, "GETADC") == 0)     return Process_GetAdc(param_start);
+    if (strcmp(cmd_name, "SETID") == 0)      return Process_SetID(param_start);
 
         // 处理各种命令...
 //        if (strcmp(cmd_name, "MotorRun") == 0) {
@@ -230,9 +235,9 @@ AtCmdStatus_t AT_ProcessCommand(char *cmd) {
     }
     else {
         // 处理不带参数的命令
-//        if (strcmp(cmd_name, "QueryVersion") == 0) {
-//            return MotorCmd_QueryVersion();
-//        }
+        if (strcmp(cmd_name, "INFO") == 0) {
+           return Process_Info();
+        }
 //		
 
     }
@@ -474,4 +479,27 @@ static AtCmdStatus_t Process_GetAdc(char *params) {
         return AT_OK;
     }
     return AT_PARAM_ERROR;
+}
+
+// AT+SETID=<ID>
+static AtCmdStatus_t Process_SetID(char *params) {
+    if (!params) return AT_PARAM_ERROR;
+    int id;
+    
+    // 我们限制 ID 范围, 例如 1-255
+    if (sscanf(params, "%d", &id) == 1) {
+        if (id < 1 || id > 255) return AT_PARAM_ERROR;
+        
+        App_Storage_SetDeviceID((uint8_t)id);
+        
+        AT_SendResponse("+SETID:OK NewID=%d", g_Config.device_id);
+        return AT_OK;
+    }
+    return AT_PARAM_ERROR;
+}
+
+// AT+INFO
+static AtCmdStatus_t Process_Info(void) {
+    AT_SendResponse("+INFO:Ver=%s,DevID=%d", SW_VERSION, g_Config.device_id);
+    return AT_OK;
 }
