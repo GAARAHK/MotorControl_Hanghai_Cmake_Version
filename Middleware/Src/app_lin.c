@@ -113,11 +113,35 @@ void App_LIN_Init(void) {
     __HAL_UART_ENABLE_IT(&LIN_UART_HANDLE, UART_IT_LBD);
     __HAL_UART_ENABLE_IT(&LIN_UART_HANDLE, UART_IT_RXNE);
     
+    // 开启错误中断 (PE, FE, NE, ORE)
+    __HAL_UART_ENABLE_IT(&LIN_UART_HANDLE, UART_IT_ERR);
+    
     // LOG("LIN Init OK\r\n");
 }
 
 void App_LIN_Process(void) {
     // 轮询或处理复杂逻辑，当前逻辑全在中断中完成解析，这里留空即可
+}
+
+// 供 HAL_UART_ErrorCallback 调用
+void App_LIN_ErrorCallback(UART_HandleTypeDef *huart) {
+    if (huart->Instance == LIN_UART_HANDLE.Instance) {
+        // LIN 总线错误处理
+        if (__HAL_UART_GET_FLAG(huart, UART_FLAG_ORE) || 
+            __HAL_UART_GET_FLAG(huart, UART_FLAG_NE)  || 
+            __HAL_UART_GET_FLAG(huart, UART_FLAG_FE)  || 
+            __HAL_UART_GET_FLAG(huart, UART_FLAG_PE)) 
+        {
+            // F1: 读SR再读DR清除
+            __IO uint32_t tmpreg;
+            tmpreg = huart->Instance->SR;
+            tmpreg = huart->Instance->DR;
+            (void)tmpreg;
+            
+            // 重置状态机到 IDLE, 等待新的 Break
+            lin_state = LIN_STATE_IDLE;
+        }
+    }
 }
 
 // 放入 stm32f1xx_it.c 的 USART3_IRQHandler 中

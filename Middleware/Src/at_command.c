@@ -14,6 +14,7 @@
 
 #include "app_main.h"     // 引用主应用配置(DeviceID/Ver)
 #include "app_storage.h"
+#include "bsp_conf.h"     // 引用硬件配置(LIN_UART_HANDLE)
 
 
 // 接收缓冲区
@@ -156,6 +157,8 @@ void AT_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 
+#include "app_lin.h"
+
 //串口错误回调
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 {
@@ -177,6 +180,10 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
 
 		// 重新启动DMA接收
         HAL_UART_Receive_DMA(huart, at_rx_buffer, AT_RX_BUFFER_SIZE);
+    }
+    else if (huart->Instance == LIN_UART_HANDLE.Instance) {
+        // 交给 LIN 模块处理可能的 USART3 错误
+        App_LIN_ErrorCallback(huart);
     }
 }
 

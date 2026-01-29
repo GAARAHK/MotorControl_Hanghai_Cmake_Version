@@ -24,5 +24,6 @@ typedef enum {
 void App_LIN_Init(void);
 void App_LIN_Process(void);
 void App_LIN_IRQHandler(void);
+void App_LIN_ErrorCallback(UART_HandleTypeDef *huart); // 新增
 
 #endif
