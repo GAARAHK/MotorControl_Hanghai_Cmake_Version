@@ -15,6 +15,7 @@
 #include "app_main.h"     // 引用主应用配置(DeviceID/Ver)
 #include "app_storage.h"
 
+
 // 接收缓冲区
 static uint8_t at_rx_buffer[AT_RX_BUFFER_SIZE];
 static char at_cmd_buffer[AT_CMD_MAX_LEN];
@@ -116,9 +117,7 @@ void AT_UART_IdleCallback(UART_HandleTypeDef *huart) {
             at_cmd_ready = true;
             
             // 优先处理关键命令
-            if (strstr(at_cmd_buffer, "AT+STOP") != NULL ||
-                strstr(at_cmd_buffer, "AT+MotorStopCustom") != NULL ||
-                strstr(at_cmd_buffer, "AT+MotorStatusUpLoadStop") != NULL) {
+            if (strstr(at_cmd_buffer, "AT+STOP") != NULL ) {
                 
                 // 立即处理停止类命令
                 AT_ProcessCommand(at_cmd_buffer);
@@ -157,7 +156,29 @@ void AT_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 
+//串口错误回调
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
+{
+    if (huart == at_uart) // 判断是哪个串口
+    {
+        // 1. 清除错误标志 (ORE, NE, FE, PE)
+        // STM32F1 清除序列: 读 SR -> 读 DR
+        __IO uint32_t tmpreg;
+        tmpreg = huart->Instance->SR;
+        tmpreg = huart->Instance->DR;
+        (void)tmpreg; // 防止未使用警告
 
+        // 2. 必须重新开启接收中断，否则后续无法接收数据
+		 // 暂停DMA接收 (并在HAL内部清除相关状态)
+        HAL_UART_DMAStop(huart);
+        
+        // 清空缓冲区 (可选)
+        memset(at_rx_buffer, 0, AT_RX_BUFFER_SIZE);
+
+		// 重新启动DMA接收
+        HAL_UART_Receive_DMA(huart, at_rx_buffer, AT_RX_BUFFER_SIZE);
+    }
+}
 
 
 

@@ -110,7 +110,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     GPIO_InitStruct.Pin = GPIO_PIN_10;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
     /* USART1 DMA Init */
@@ -157,7 +157,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 
     GPIO_InitStruct.Pin = LIN_RX_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     HAL_GPIO_Init(LIN_RX_GPIO_Port, &GPIO_InitStruct);
 
     /* USART3 interrupt Init */

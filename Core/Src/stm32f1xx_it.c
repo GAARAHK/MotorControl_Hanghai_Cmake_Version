@@ -23,6 +23,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "app_lin.h"
+ #include "at_command.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -280,6 +281,13 @@ void TIM3_IRQHandler(void)
 void USART1_IRQHandler(void)
 {
   /* USER CODE BEGIN USART1_IRQn 0 */
+  	// 空闲中断检测
+  if(__HAL_UART_GET_FLAG(&huart1, UART_FLAG_IDLE))
+  {
+    __HAL_UART_CLEAR_IDLEFLAG(&huart1);
+    // 调用 AT 命令模块的空闲回调
+    AT_UART_IdleCallback(&huart1);
+  }
 
   /* USER CODE END USART1_IRQn 0 */
   HAL_UART_IRQHandler(&huart1);
