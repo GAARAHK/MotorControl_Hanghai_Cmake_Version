@@ -19,6 +19,12 @@ void App_Init(void) {
     App_Adc_Init(); // 启动ADC采样
     AT_Init(&LOG_UART_HANDLE); // 使用宏
 	Log_Init(&LOG_UART_HANDLE); // 使用宏
+
+        // 初始化联动模块并默认启动 Mode 6 (模拟往复)
+    App_Linkage_Init(); 
+    App_Linkage_SetMode(6, 0); 
+
+
 }
 
 void App_Loop(void) {

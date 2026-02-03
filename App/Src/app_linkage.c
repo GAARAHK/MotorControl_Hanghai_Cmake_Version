@@ -1,5 +1,6 @@
 #include "app_linkage.h"
 #include "app_motor.h"
+#include "app_adc.h" // 引用ADC数据
 
 
 
@@ -34,6 +35,7 @@ static void Logic_Mode_2(void);
 static void Logic_Mode_3(void);
 static void Logic_Mode_4(void);
 static void Logic_Mode_5(void); // Mode 5 declaration
+static void Logic_Mode_6(void); // Mode 6 declaration
 
 // --- 接口实现 ---
 
@@ -71,6 +73,7 @@ void App_Linkage_Process(void) {
 		case 3: Logic_Mode_3(); break;
         case 4: Logic_Mode_4(); break;
         case 5: Logic_Mode_5(); break; // Mode 5 case
+        case 6: Logic_Mode_6(); break; // Mode 6 case (Analog Reciprocating)
         // Case 3, 4...
         default:  
             current_mode = 0; // 未知模式，自动停止
@@ -374,6 +377,83 @@ static void Logic_Mode_5(void) {
             }
             break;
             
+        default:
+            sm_state = SM_IDLE;
+            break;
+    }
+}
+
+/**
+ * @brief 逻辑6: 模拟开关往复运动 (ADC Position)
+ * Logic:
+ *  - Default: Start CW
+ *  - If ADC >= 3.3V (High Threshold) -> Stop & Switch to CCW
+ *  - If ADC <= 0V (Low Threshold) -> Stop & Switch to CW
+ */
+static void Logic_Mode_6(void) {
+    uint16_t adc_val = App_Adc_GetPos(0); 
+    // Thresholds: 0-4095 scale. 
+    // 0V ~ 100
+    // 3.3V ~ 4000
+    const uint16_t THRESHOLD_LOW = 100;
+    const uint16_t THRESHOLD_HIGH = 4000;
+    const uint16_t SPEED = 1000; // Speed 800
+
+    switch (sm_state) {
+        case SM_INIT:
+            // 默认 CW
+            sm_state = SM_STEP_1; 
+            break;
+
+        case SM_STEP_1: // Action: CW
+            // Start moving CW indefinitely until stopped
+             if (!App_Motor_IsBusy(0)) {
+                // Manual Move continues until Stop is called
+                App_Motor_MoveManual(0, 0, SPEED); // 0=CW
+                sm_state = SM_STEP_2;
+            }
+            break;
+
+        case SM_STEP_2: // Monitor CW
+            // Check High Limit (3.3V)
+            if (adc_val >= THRESHOLD_HIGH) {
+                App_Motor_Stop(0);
+                sm_timer = HAL_GetTick(); // Start delay
+                sm_state = SM_STEP_3;
+            }
+            break;
+
+        case SM_STEP_3: // Wait Delay before CCW
+            if (HAL_GetTick() - sm_timer > 500) { 
+                sm_state = SM_STEP_4;
+            }
+            break;
+            
+        case SM_STEP_4: // Action: CCW
+             if (!App_Motor_IsBusy(0)) {
+                 App_Motor_MoveManual(0, 1, SPEED); // 1=CCW
+                 sm_state = SM_STEP_5;
+             }
+             break;
+
+        case SM_STEP_5: // Monitor CCW
+             // Check Low Limit (0V)
+             if (adc_val <= THRESHOLD_LOW) {
+                 App_Motor_Stop(0);
+                 sm_timer = HAL_GetTick();
+                 sm_state = SM_STEP_6;
+             }
+             break;
+
+        case SM_STEP_6: // Wait Delay before CW (Cycle complete)
+             if (HAL_GetTick() - sm_timer > 500) {
+                 // Check Loop Limit (1 cycle = CW + CCW)
+                 if (Check_Loop_Finish()) {
+                     sm_state = SM_STEP_1; // Loop back to CW
+                 }
+             }
+             break;
+
         default:
             sm_state = SM_IDLE;
             break;

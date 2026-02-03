@@ -12,6 +12,7 @@
 #include "app_adc.h"      // 引用ADC数据接口
 #include "bsp_bldc.h"     // 引用底层获取状态
 
+#include "app_lin.h"
 #include "app_main.h"     // 引用主应用配置(DeviceID/Ver)
 #include "app_storage.h"
 #include "bsp_conf.h"     // 引用硬件配置(LIN_UART_HANDLE)
@@ -157,7 +158,7 @@ void AT_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
 }
 
 
-#include "app_lin.h"
+
 
 //串口错误回调
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)

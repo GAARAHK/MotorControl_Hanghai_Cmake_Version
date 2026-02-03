@@ -127,6 +127,9 @@ int main(void)
   App_Adc_ConfigProtect_Motor(0, 5.0f);
 
 
+  
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */

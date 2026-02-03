@@ -10,6 +10,7 @@ typedef enum {
     LINK_MODE_3    = 3, // 逻辑3: 模拟双电机协作 (仅供展示扩展性)
 	LINK_MODE_4    = 4,
 	LINK_MODE_5    = 5,
+    LINK_MODE_6    = 6, // 逻辑6: ADC模拟限位开关(自动往复)
     // 在此处添加更多...
 } LinkageMode_t;
 
