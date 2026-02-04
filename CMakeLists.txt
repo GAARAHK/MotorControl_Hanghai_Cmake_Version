@@ -78,7 +78,11 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
 
 # 生成 Hex 和 Bin 文件
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    # 生成 Hex
     COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
+    
+    # 生成 Bin: 链接脚本修复后，无需手动过滤段
     COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
+        
     COMMENT "Generating HEX and BIN files..."
 )
